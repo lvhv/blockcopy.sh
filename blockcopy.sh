@@ -34,17 +34,20 @@ else
 fi 
 
 BLOCKSIZE=1048576
-
-TEMPFILE=temphashes.txt
+DIRNAME="~/.blockcopy"
+#echo $DIRNAME
+#mkdir -p $DIRNAME
 HASHFILE=`echo "hash."$FILENAME |tr // @`
+TEMPFILE=`echo "temp."$HASHFILE`
 echo "HASHFILE: $HASHFILE"
 FILESIZE=$(stat -c%s "$FILENAME")
 echo "Size of $FILENAME = $FILESIZE bytes."
 touch $HASHFILE
-
+STARTTIME=$(date +%s.%N)
 PTR=0
 P=0
-
+CHANGED=0
+COPIEDBYTES=0
 while [ "$PTR" -lt "$FILESIZE" ]
 do
 let "PTR2= $PTR + $BLOCKSIZE"
@@ -57,9 +60,9 @@ read HASH2
 if [ "$HASH" != "$HASH2" ]
 then
 echo "not match" $P $HASH
-# dd if=$FILENAME skip=$P seek=$P bs=$BLOCKSIZE count=1 status=noxfer of=$OUTFILENAME 2>/dev/null
-else
-echo "match"
+let "CHANGED+=1"
+let "COPIEDBYTES+=$BLOCKSIZE"
+dd if=$FILENAME skip=$P seek=$P bs=$BLOCKSIZE count=1 status=noxfer of=$OUTFILENAME 2>/dev/null
 fi
 
 
@@ -68,6 +71,12 @@ let "PTR+=$BLOCKSIZE"
 let "P+= 1"
 echo $HASH >> "$TEMPFILE"
 done < "$HASHFILE" 
+echo "Changed:$CHANGED"
 
-# mv "$TEMPFILE" "$HASHFILE" 
-
+mv "$TEMPFILE" "$HASHFILE" 
+ENDTIME=$(date +%s.%N)
+DIFFTIME=$(echo "$ENDTIME - $STARTTIME" | bc)
+echo "Time: $DIFFTIME"
+echo "Copied bytes $COPIEDBYTES"
+SPD=$(echo "$COPIEDBYTES / $DIFFTIME / 1024 / 1024" | bc)
+echo "Speed: $SPD mb/s"
