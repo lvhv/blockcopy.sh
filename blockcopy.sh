@@ -1,5 +1,10 @@
 #!/bin/bash
-# invocation: $0 infile username outfile
+# blockcopy.sh 
+# copies the changed blocks of a file or device via ssh and dd
+# invocation: blockcopy.sh infile username@host outfile
+# (C) 2012 Lates Viktor
+# still not finished
+
 
 if [ -n "$1" ]
 # Test whether command-line argument is present (non-empty).
