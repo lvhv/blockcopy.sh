@@ -1,3 +1,5 @@
+UNTESTED SCRIPT, USE IT AT YOUR OWN RISK!
+
 blockcopy.sh is a simple bash shell script, which copies only the changed blocks of a local device or file to a remote location. Theres no need to calculate remote checksums, they're cached on the local server, in the ~/.blocksync dir.
 In order to use it, the ssh id-s should  be copied to the remote server, and the rights should be set up, as well.
 The intended use is to copy LVM volumes, e.g. virtual servers to an other host.
