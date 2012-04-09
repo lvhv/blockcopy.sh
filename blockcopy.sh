@@ -5,6 +5,13 @@
 # (C) 2012 Lates Viktor
 # still not finished
 
+DIRNAME=~
+DIRNAME+="/.blockcopy"
+echo $DIRNAME
+if [ ! -d $DIRNAME ]
+then
+mkdir $DIRNAME
+fi
 
 if [ -n "$1" ]
 # Test whether command-line argument is present (non-empty).
@@ -34,12 +41,11 @@ else
 fi 
 
 BLOCKSIZE=1048576
-DIRNAME="~/.blockcopy"
-#echo $DIRNAME
-#mkdir -p $DIRNAME
-HASHFILE=`echo "hash."$FILENAME |tr // @`
-TEMPFILE=`echo "temp."$HASHFILE`
+HASHFILE=`echo "hash.$FILENAME$OUTFILENAME"|tr // @`
+HASHFILE="$DIRNAME/$HASHFILE"
+TEMPFILE=`echo $HASHFILE".temp"`
 echo "HASHFILE: $HASHFILE"
+
 FILESIZE=$(stat -c%s "$FILENAME")
 echo "Size of $FILENAME = $FILESIZE bytes."
 touch $HASHFILE
@@ -48,24 +54,26 @@ PTR=0
 P=0
 CHANGED=0
 COPIEDBYTES=0
+COUNT=" count=1 "
 while [ "$PTR" -lt "$FILESIZE" ]
 do
 let "PTR2= $PTR + $BLOCKSIZE"
-if [ "$PTR2" -gt "$FILESIZE" ]
+if [ "$PTR2" -ge "$FILESIZE" ]
 then
-let "BLOCKSIZE= $FILESIZE - $PTR"
+COUNT=""
 fi
-HASH=`dd if=$FILENAME skip=$P bs=$BLOCKSIZE count=1 status=noxfer 2>/dev/null|md5sum|cut -d ' ' -f 1`
+echo "count:$COUNT"
+HASH=`dd if=$FILENAME skip=$P bs=$BLOCKSIZE $COUNT  status=noxfer 2>/dev/null|md5sum|cut -d ' ' -f 1`
 read HASH2
 if [ "$HASH" != "$HASH2" ]
 then
 echo "not match" $P $HASH
 let "CHANGED+=1"
 let "COPIEDBYTES+=$BLOCKSIZE"
-dd if=$FILENAME skip=$P seek=$P bs=$BLOCKSIZE count=1 status=noxfer of=$OUTFILENAME 2>/dev/null
+dd if=$FILENAME skip=$P bs=$BLOCKSIZE $COUNT status=noxfer 2>/dev/null|ssh -C -c blowfish-cbc $OUTUSER dd of=$OUTFILENAME seek=$P bs=$BLOCKSIZE status=noxfer 
+conv=notrunc2>/dev/null
+#dd if=$FILENAME skip=$P bs=$BLOCKSIZE $COUNT  status=noxfer 2>/dev/null|dd of=$OUTFILENAME seek=$P bs=$BLOCKSIZE $COUNT status=noxfer conv=notrunc 2>/dev/null
 fi
-
-
 
 let "PTR+=$BLOCKSIZE"
 let "P+= 1"
